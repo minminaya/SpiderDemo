@@ -4,7 +4,9 @@ import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
 import us.codecraft.webmagic.pipeline.ConsolePipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
+import utils.SqlUtilForReBuild;
 import utils.SqlUtilForSelectData;
+import utils.SqlUtilForSpider;
 
 import java.util.List;
 
@@ -27,7 +29,7 @@ public class MeituRepoProcessor implements PageProcessor {
         page.addTargetRequests(urls);
 
         //这个是提取的主站www.meizitu.com的每个突变的title，用xpath表示，这个可以在调试里面下节点右键copy的到xpath地址，后面的这里的意思是id为maincontent的容器(这里是div)中的第一个盒子下的第一个盒子中的h2标签下的a标签的文字
-       page.putField("webTitle", page.getHtml().xpath("//*[@id=\"maincontent\"]/div[1]/div[1]/h2/a/text()"));
+        page.putField("webTitle", page.getHtml().xpath("//*[@id=\"maincontent\"]/div[1]/div[1]/h2/a/text()"));
         //先用xpath过滤到具体大的块（id为picture的容器中的p标签的img标签的src属性值），接着正则表达式提取出来（规律）
         page.putField("picName", page.getHtml().xpath("//*[@id=\"picture\"]/p/img[@src]").regex("(http:\\/\\/mm\\.howkuai\\.com\\/wp-content\\/uploads\\/(.*)\\.jpg)").all());
 
@@ -48,28 +50,33 @@ public class MeituRepoProcessor implements PageProcessor {
         return site;
     }
 
+
     public static void main(String[] args) {
 
-//        Spider.create(new MeituRepoProcessor())
-//                .addUrl("http://www.meizitu.com/")
-////                .addPipeline(new ConsolePipeline())
-////                .addPipeline(new PileLineTest())
-//                .addPipeline(new PileLineTest11())
-//                .thread(1)
-//                .run();
+        //重新建表
+        SqlUtilForReBuild.rebuild();
+        Spider.create(new MeituRepoProcessor())
+                .addUrl("http://www.meizitu.com/")
+//                .addPipeline(new ConsolePipeline())
+//                .addPipeline(new PileLineTest())
+                .addPipeline(new PileLineTest11())
+                //单线程保证存到数据库的数据不会乱序
+                .thread(1)
+                .run();
 
 
+//        SqlUtilForSelectData sqlUtilForSelectData = new SqlUtilForSelectData();
+//
+//        List<MeiTuModel> meiTuModels = sqlUtilForSelectData.selectDataFormeiziweboneTable(1, 20);
+//        for (int i = 0; i < meiTuModels.size(); i++) {
+//            System.out.println("meiTuModels序号--" + i + "--title：" + meiTuModels.get(i).getWebTitle());
+//
+//            for (int j = 0; j < meiTuModels.get(i).getPicInfos().size(); j++) {
+//                System.out.println("meiTuModels序号--" + i + "--pic中的图片地址为：" + meiTuModels.get(i).getPicInfos().get(j).getPicUrl());
+//            }
+//            System.out.println("==========================================================");
+//        }
 
-        SqlUtilForSelectData sqlUtilForSelectData = new SqlUtilForSelectData();
 
-        List<MeiTuModel> meiTuModels = sqlUtilForSelectData.selectDataFormeiziweboneTable(1, 20);
-        for (int i = 0; i < meiTuModels.size(); i++) {
-            System.out.println("meiTuModels序号--" + i + "--title：" + meiTuModels.get(i).getWebTitle());
-
-            for (int j = 0; j < meiTuModels.get(i).getPicInfos().size(); j++) {
-                System.out.println("meiTuModels序号--" + i + "--pic中的图片地址为：" + meiTuModels.get(i).getPicInfos().get(j).getPicUrl());
-            }
-            System.out.println("==========================================================");
-        }
     }
 }
